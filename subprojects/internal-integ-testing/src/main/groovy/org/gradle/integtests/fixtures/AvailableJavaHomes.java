@@ -31,9 +31,8 @@ import org.gradle.integtests.fixtures.jvm.JvmInstallation;
 import org.gradle.internal.SystemProperties;
 import org.gradle.internal.jvm.Jre;
 import org.gradle.internal.jvm.Jvm;
-import org.gradle.internal.jvm.inspection.CachingJvmVersionDetector;
-import org.gradle.internal.jvm.inspection.DefaultJvmVersionDetector;
-import org.gradle.internal.jvm.inspection.JvmVersionDetector;
+import org.gradle.internal.jvm.inspection.DefaultJvmMetadataDetector;
+import org.gradle.internal.jvm.inspection.JvmMetadataDetector;
 import org.gradle.internal.operations.TestBuildOperationExecutor;
 import org.gradle.internal.os.OperatingSystem;
 import org.gradle.jvm.toolchain.internal.AsdfInstallationSupplier;
@@ -205,7 +204,8 @@ public abstract class AvailableJavaHomes {
 
     private static List<JvmInstallation> discoverLocalInstallations() {
         ExecHandleFactory execHandleFactory = TestFiles.execHandleFactory();
-        JvmVersionDetector versionDetector = new CachingJvmVersionDetector(new DefaultJvmVersionDetector(execHandleFactory));
+        // TODO: [bm] caching?
+        JvmMetadataDetector versionDetector = new DefaultJvmMetadataDetector(execHandleFactory);
         final List<JvmInstallation> jvms = new SharedJavaInstallationRegistry(defaultInstallationSuppliers(), new TestBuildOperationExecutor())
             .listInstallations().stream()
             .map(i -> asJvmInstallation(i.getLocation(), versionDetector))
@@ -236,8 +236,8 @@ public abstract class AvailableJavaHomes {
         );
     }
 
-    private static JvmInstallation asJvmInstallation(File javaHome, JvmVersionDetector versionDetector) {
-        JavaVersion version = versionDetector.getJavaVersion(new File(javaHome, "bin/java").getAbsolutePath());
+    private static JvmInstallation asJvmInstallation(File javaHome, JvmMetadataDetector versionDetector) {
+        JavaVersion version = versionDetector.getMetadata(javaHome).getLangageVersion();
         boolean isJdk = new File(javaHome, OperatingSystem.current().getExecutableName("bin/javac")).exists();
         return new JvmInstallation(version, javaHome, isJdk);
     }
