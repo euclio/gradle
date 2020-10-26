@@ -33,8 +33,8 @@ public interface JvmInstallationMetadata {
         JAVA_COMPILER
     }
 
-    static DefaultJvmInstallationMetadata from(File javaHome, JavaVersion version, String vendor, String implementationName) {
-        return new DefaultJvmInstallationMetadata(javaHome, version, vendor, implementationName);
+    static DefaultJvmInstallationMetadata from(File javaHome, String implementationVersion, String vendor, String implementationName) {
+        return new DefaultJvmInstallationMetadata(javaHome, implementationVersion, vendor, implementationName);
     }
 
     static JvmInstallationMetadata failure(File javaHome, String errorMessage) {
@@ -42,6 +42,8 @@ public interface JvmInstallationMetadata {
     }
 
     JavaVersion getLangageVersion();
+
+    String getImplementationVersion();
 
     JvmVendor getVendor();
 
@@ -53,17 +55,21 @@ public interface JvmInstallationMetadata {
 
     String getErrorMessage();
 
+    boolean isValidInstallation();
+
     class DefaultJvmInstallationMetadata implements JvmInstallationMetadata {
 
         private JavaVersion languageVersion;
         private final String vendor;
         private final String implementationName;
         private Path javaHome;
+        private final String implementationVersion;
         private Supplier<Set<JavaInstallationCapability>> capabilities = Suppliers.memoize(() -> gatherCapabilities());
 
-        private DefaultJvmInstallationMetadata(File javaHome, JavaVersion languageVersion, String vendor, String implementationName) {
+        private DefaultJvmInstallationMetadata(File javaHome, String implementationVersion, String vendor, String implementationName) {
             this.javaHome = javaHome.toPath();
-            this.languageVersion = languageVersion;
+            this.implementationVersion = implementationVersion;
+            this.languageVersion = JavaVersion.toVersion(implementationVersion);
             this.vendor = vendor;
             this.implementationName = implementationName;
         }
@@ -71,6 +77,11 @@ public interface JvmInstallationMetadata {
         @Override
         public JavaVersion getLangageVersion() {
             return languageVersion;
+        }
+
+        @Override
+        public String getImplementationVersion() {
+            return implementationVersion;
         }
 
         @Override
@@ -87,7 +98,7 @@ public interface JvmInstallationMetadata {
         public String getDisplayName() {
             final String vendor = determineVendorName();
             String installationType = determineInstallationType(vendor);
-            return MessageFormat.format("{0}{1} {2}", vendor, installationType, getLangageVersion().getMajorVersion());
+            return MessageFormat.format("{0}{1}", vendor, installationType);
         }
 
         private String determineVendorName() {
@@ -97,7 +108,7 @@ public interface JvmInstallationMetadata {
                     return "OpenJDK";
                 }
             }
-            return vendor.getDisplayName();
+            return getVendor().getDisplayName();
         }
 
         private String determineInstallationType(String vendor) {
@@ -128,6 +139,10 @@ public interface JvmInstallationMetadata {
             throw new UnsupportedOperationException();
         }
 
+        @Override
+        public boolean isValidInstallation() {
+            return true;
+        }
     }
 
     class FailureInstallationMetadata implements JvmInstallationMetadata {
@@ -142,6 +157,11 @@ public interface JvmInstallationMetadata {
 
         @Override
         public JavaVersion getLangageVersion() {
+            throw unsupportedOperation();
+        }
+
+        @Override
+        public String getImplementationVersion() {
             throw unsupportedOperation();
         }
 
@@ -174,6 +194,10 @@ public interface JvmInstallationMetadata {
             return errorMessage;
         }
 
+        @Override
+        public boolean isValidInstallation() {
+            return false;
+        }
     }
 
 }

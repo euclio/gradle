@@ -38,7 +38,7 @@ public interface JvmVendor {
             this.displayName = displayName;
         }
 
-        public String getDisplayName() {
+        private String getDisplayName() {
             return displayName;
         }
 
@@ -60,6 +60,8 @@ public interface JvmVendor {
 
     KnownJvmVendor getKnownVendor();
 
+    String getDisplayName();
+
     static JvmVendor fromString(String vendor) {
         return new JvmVendor() {
 
@@ -71,6 +73,15 @@ public interface JvmVendor {
             @Override
             public KnownJvmVendor getKnownVendor() {
                 return KnownJvmVendor.parse(vendor);
+            }
+
+            @Override
+            public String getDisplayName() {
+                final KnownJvmVendor knownVendor = getKnownVendor();
+                if(knownVendor != KnownJvmVendor.UNKNOWN) {
+                    return knownVendor.getDisplayName();
+                }
+                return getRawVendor();
             }
         };
     }

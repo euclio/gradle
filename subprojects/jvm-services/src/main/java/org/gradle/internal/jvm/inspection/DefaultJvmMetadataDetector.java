@@ -50,18 +50,18 @@ public class DefaultJvmMetadataDetector implements JvmMetadataDetector {
     }
 
     private JvmInstallationMetadata asMetadata(File javaHome, EnumMap<ProbedSystemProperty, String> metadata) {
-        JavaVersion version;
+        String implementationVersion = metadata.get(ProbedSystemProperty.VERSION);
         try {
-            version = JavaVersion.toVersion(metadata.get(ProbedSystemProperty.VERSION));
+            JavaVersion.toVersion(implementationVersion);
         } catch(IllegalArgumentException e) {
-            return JvmInstallationMetadata.failure(javaHome, "Cannot parse version number: " + metadata.get(ProbedSystemProperty.VERSION));
+            return JvmInstallationMetadata.failure(javaHome, "Cannot parse version number: " + implementationVersion);
         }
-        if (version == null) {
+        if (implementationVersion == null) {
             return JvmInstallationMetadata.failure(javaHome, metadata.get(ProbedSystemProperty.Z_ERROR));
         }
         String vendor = metadata.get(ProbedSystemProperty.VENDOR);
         String implementationName = metadata.get(ProbedSystemProperty.VM);
-        return JvmInstallationMetadata.from(javaHome, version, vendor, implementationName);
+        return JvmInstallationMetadata.from(javaHome, implementationVersion, vendor, implementationName);
     }
 
     private File resolveSymlink(File jdkPath) {

@@ -55,7 +55,7 @@ class DefaultJvmMetadataDetectorTest extends Specification {
 
         then:
         assert metadata.langageVersion == javaVersion
-        assert displayName == null || metadata.displayName == displayName
+        assert displayName == null || metadata.displayName == displayName + " " + metadata.langageVersion
         assert metadata.javaHome != null
 
         where:
@@ -122,6 +122,8 @@ class DefaultJvmMetadataDetectorTest extends Specification {
 
         assertIsUnsupported({ metadata.langageVersion })
         assertIsUnsupported({ metadata.vendor })
+        assertIsUnsupported({ metadata.displayName })
+        assertIsUnsupported({ metadata.implementationVersion })
 
         where:
         jdk                                   | systemProperties | exists | errorMessage
